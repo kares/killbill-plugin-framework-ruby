@@ -6,21 +6,13 @@ require 'spec/killbill/helpers/transaction_spec'
 describe Killbill::Plugin::ActiveMerchant::PaymentPlugin do
 
   before(:all) do
-    Dir.mktmpdir do |dir|
-      file = File.new(File.join(dir, 'test.yml'), "w+")
-      file.write(<<-eos)
-:test:
-  - :account_id: default
-    :test: true
-  - :account_id: something_non_standard
-    :test: true
-# As defined by spec_helper.rb
-:database:
-  :adapter: 'sqlite3'
-  :database: 'test.db'
-      eos
-      file.close
-
+    plugin_config = {
+      :test => [
+        { :account_id => "default", :test => true },
+        { :account_id => "something_non_standard", :test => true }
+      ]
+    }
+    with_plugin_yaml_config('test.yml', plugin_config) do |file|
       @plugin              = ::Killbill::Plugin::ActiveMerchant::PaymentPlugin.new(Proc.new { |config| nil },
                                                                                    :test,
                                                                                    ::Killbill::Test::TestPaymentMethod,
