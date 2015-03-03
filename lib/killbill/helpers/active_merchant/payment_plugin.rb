@@ -37,7 +37,11 @@ module Killbill
         def after_request
           pool = ::ActiveRecord::Base.connection_pool
           @logger.debug { "after_request: pool.active_connection? = #{pool.active_connection?}, pool.connections.size = #{pool.connections.size}, connections = #{pool.connections.inspect}" }
-          ::ActiveRecord::Base.connection.close if pool.active_connection? # check-in to pool
+          begin
+            ::ActiveRecord::Base.connection.close if pool.active_connection? # check-in to pool
+          rescue StandardError => e
+            @logger.warn "after_rescue connection.close failed: #{e.inspect}\n  #{e.backtrace.join("\n  ")}"
+          end
         end
 
         def authorize_payment(kb_account_id, kb_payment_id, kb_payment_transaction_id, kb_payment_method_id, amount, currency, properties, context)
