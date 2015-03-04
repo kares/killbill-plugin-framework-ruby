@@ -37,10 +37,12 @@ module Killbill
         def after_request
           pool = ::ActiveRecord::Base.connection_pool
           @logger.debug { "after_request: pool.active_connection? = #{pool.active_connection?}, pool.connections.size = #{pool.connections.size}, connections = #{pool.connections.inspect}" }
+          thread = Thread.current; thread = "[#{thread.to_java.native_thread.name} #{thread.inspect}]"
+          @logger.info "after_request #{thread} closing connection ..."
           begin
             ::ActiveRecord::Base.connection.close if pool.active_connection? # check-in to pool
           rescue StandardError => e
-            @logger.warn "after_rescue connection.close failed: #{e.inspect}\n  #{e.backtrace.join("\n  ")}"
+            @logger.warn "after_request #{thread} connection.close failed: #{e.inspect}\n  #{e.backtrace.join("\n  ")}"
           end
         end
 
